@@ -6,15 +6,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
     add_compile_options(/W4 /utf-8)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS -DUNICODE -D_UNICODE)
+    add_definitions(-DUNICODE -D_UNICODE)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-include_directories(include)
-
-set(SOURCES
-    src/main.cpp
+# ── 공유 라이브러리 (main.cpp 제외한 모든 모듈) ─────────────────
+# 실행 파일과 테스트가 동일한 코드를 링크하도록 정적 라이브러리로 분리
+set(CORE_SOURCES
     src/common.cpp
     src/hash.cpp
     src/file_info.cpp
@@ -22,10 +21,24 @@ set(SOURCES
     src/report.cpp
 )
 
-add_executable(winforensics ${SOURCES})
+add_library(winforensics_core STATIC ${CORE_SOURCES})
+target_include_directories(winforensics_core PUBLIC include)
 
 if(WIN32)
-    target_link_libraries(winforensics PRIVATE shlwapi)
+    target_link_libraries(winforensics_core PRIVATE shlwapi)
 endif()
 
+# ── 실행 파일 ───────────────────────────────────────────────────
+add_executable(winforensics src/main.cpp)
+target_link_libraries(winforensics PRIVATE winforensics_core)
+
 install(TARGETS winforensics DESTINATION bin)
+
+# ── 단위 테스트 ─────────────────────────────────────────────────
+option(BUILD_TESTING "Build unit tests" ON)
+if(BUILD_TESTING)
+    enable_testing()
+    add_executable(test_winforensics tests/test_main.cpp)
+    target_link_libraries(test_winforensics PRIVATE winforensics_core)
+    add_test(NAME UnitTests COMMAND test_winforensics)
+endif()

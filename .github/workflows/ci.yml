@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master", "claude/**"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  # ── Windows MSVC 빌드 + 테스트 ────────────────────────────────
+  windows-msvc:
+    name: Windows / MSVC
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (MSVC x64)
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: winforensics-windows-x64
+          path: build/Release/winforensics.exe
+          if-no-files-found: warn
+
+  # ── Windows MinGW 빌드 + 테스트 ──────────────────────────────
+  windows-mingw:
+    name: Windows / MinGW-w64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (MinGW)
+        run: cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  # ── Linux GCC 빌드 + 테스트 (크로스 플랫폼 컴파일 확인) ───────
+  linux-gcc:
+    name: Linux / GCC
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

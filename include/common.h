@@ -50,9 +50,12 @@ std::string bytesToHex(const uint8_t* data, size_t len);
 // ── Windows 전용 함수 선언 ────────────────────────────────────
 #ifdef _WIN32
 
-// wstringToString : Windows는 파일 경로에 유니코드(wstring, L"...")를
-//                  쓰는데, 이를 일반 문자열(string, UTF-8)로 변환합니다.
+// wstringToString : Windows 유니코드 wstring → UTF-8 string 변환
 std::string wstringToString(const std::wstring& ws);
+
+// stringToWstring : UTF-8 string → Windows 유니코드 wstring 변환
+//                  한글 경로 등 비ASCII 경로를 Windows API에 넘길 때 사용
+std::wstring stringToWstring(const std::string& s);
 
 // filetimeToTimet : Windows의 FILETIME(1601-01-01 기준 100나노초 단위)을
 //                  C 표준 time_t(1970-01-01 기준 초 단위)로 변환합니다.
