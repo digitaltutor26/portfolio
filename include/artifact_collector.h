@@ -33,6 +33,7 @@
 #include <string>   // std::string
 #include <vector>   // std::vector
 #include <ctime>    // std::time_t
+#include <cstdint>  // uint64_t
 
 namespace forensics {
 
