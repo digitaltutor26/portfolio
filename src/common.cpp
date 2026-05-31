@@ -19,20 +19,18 @@ std::string formatTimestamp(std::time_t t) {
     // 0 이하이면 유효하지 않은 시각이므로 "N/A" 반환
     if (t <= 0) return "N/A";
 
-    char buf[32]; // 결과 문자열을 담을 버퍼 (날짜/시각 형식은 최대 20자 정도)
+    char buf[32];
+    struct tm tm_info = {};
 
-    // localtime : time_t를 연/월/일/시/분/초로 나눠주는 struct tm으로 변환
-    //             localtime은 현재 컴퓨터의 시간대(timezone)를 반영합니다.
-    struct tm* tm_info = localtime(&t);
+    // localtime_s (MSVC) / localtime_r (POSIX) : thread-safe 버전
+    // 전역 상태를 공유하는 localtime() 대신 호출자 제공 버퍼에 결과를 씁니다.
+#ifdef _WIN32
+    localtime_s(&tm_info, &t);
+#else
+    localtime_r(&t, &tm_info);
+#endif
 
-    // strftime : struct tm → 원하는 형식의 문자열
-    //   %Y : 4자리 연도 (예: 2024)
-    //   %m : 2자리 월   (예: 07)
-    //   %d : 2자리 일   (예: 15)
-    //   %H : 2자리 시   (24시간 형식, 예: 13)
-    //   %M : 2자리 분   (예: 45)
-    //   %S : 2자리 초   (예: 22)
-    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", tm_info);
+    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm_info);
     return buf;
 }
 
@@ -136,6 +134,20 @@ std::string filetimeToString(const FILETIME& ft) {
 }
 
 // ============================================================
+// stringToWstring : UTF-8 string → Windows 유니코드 wstring
+// ============================================================
+// wstringToString의 역방향 변환입니다.
+// 한글 사용자명이 포함된 경로 등을 Windows API에 넘길 때 필요합니다.
+std::wstring stringToWstring(const std::string& s) {
+    if (s.empty()) return {};
+    int sz = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
+    if (sz <= 0) return {};
+    std::wstring result(sz - 1, L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, result.data(), sz);
+    return result;
+}
+
+// ============================================================
 // expandEnvVar : 환경 변수 → 실제 경로 문자열
 // ============================================================
 // 예) "%APPDATA%\Microsoft\Windows\Recent"
@@ -144,8 +156,8 @@ std::string filetimeToString(const FILETIME& ft) {
 // 환경 변수를 쓰는 이유: 사용자마다 C 드라이브 경로가 다를 수 있기 때문에
 // 하드코딩 대신 환경 변수로 경로를 표현합니다.
 std::string expandEnvVar(const std::string& path) {
-    // Windows API는 wstring을 받으므로 먼저 변환
-    std::wstring wpath(path.begin(), path.end());
+    // Windows API는 wstring을 받으므로 변환 (환경 변수 이름은 ASCII)
+    std::wstring wpath = stringToWstring(path);
     wchar_t expanded[MAX_PATH] = {}; // MAX_PATH = 260, Windows 최대 경로 길이
 
     // ExpandEnvironmentStringsW : 환경 변수를 실제 값으로 치환해주는 API

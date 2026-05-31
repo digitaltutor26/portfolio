@@ -1,0 +1,42 @@
+# ── CMake 빌드 디렉터리 ──────────────────────────────────────
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+install_manifest.txt
+
+# ── 컴파일 결과물 ─────────────────────────────────────────────
+*.exe
+*.dll
+*.lib
+*.a
+*.so
+*.dylib
+*.o
+*.obj
+*.pdb
+*.ilk
+*.exp
+
+# ── IDE 파일 ─────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.user
+*.vc.db
+*.vc.opendb
+*.sln.docstates
+*.vcxproj.user
+
+# ── OS 파일 ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── 테스트 결과 파일 ──────────────────────────────────────────
+*.csv
+*.json
+LastTest.log
+Testing/

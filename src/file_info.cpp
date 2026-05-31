@@ -179,7 +179,8 @@ FileInfo FileInfoCollector::collect(const fs::path& path, bool computeHash) {
     std::error_code ec; // 예외 대신 에러 코드로 처리 (파일이 없거나 권한 없을 때)
 
     if (fs::exists(path, ec)) {
-        fi.size = fs::file_size(path, ec); // 파일 크기 (바이트)
+        auto sz = fs::file_size(path, ec);
+        if (!ec) fi.size = sz; // 읽기 실패 시 0 유지
 
         // 수정 시각 (std::filesystem 기본 제공, 크로스 플랫폼)
         auto modTime = fs::last_write_time(path, ec);

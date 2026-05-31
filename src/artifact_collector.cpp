@@ -58,8 +58,8 @@ std::vector<Artifact> ArtifactCollector::scanDir(const std::string& dirPath,
                                                   const std::string& extFilter) {
     std::vector<Artifact> results;
 
-    // Windows API는 wstring(유니코드)을 요구하므로 변환
-    std::wstring wDirPath(dirPath.begin(), dirPath.end());
+    // UTF-8 경로를 Windows API용 wstring으로 변환 (한글 경로 지원)
+    std::wstring wDirPath = stringToWstring(dirPath);
 
     // 검색 패턴: "폴더경로\*"  (* = 모든 파일)
     std::wstring searchPath = wDirPath + L"\\*";

@@ -58,7 +58,7 @@ std::string Report::jsonEscape(const std::string& s) {
     for (unsigned char c : s) {
         switch (c) {
             case '"':  out += "\\\""; break; // " → \"
-            case '\\': out += "\\\\"; break; // \ → \\
+            case '\\': out += "\\\\"; break; // backslash: escape as double-backslash
             case '\n': out += "\\n";  break; // 줄바꿈 → \n
             case '\r': out += "\\r";  break; // 캐리지 리턴 → \r
             case '\t': out += "\\t";  break; // 탭 → \t
