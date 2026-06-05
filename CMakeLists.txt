@@ -18,6 +18,8 @@ set(CORE_SOURCES
     src/hash.cpp
     src/file_info.cpp
     src/artifact_collector.cpp
+    src/lnk_parser.cpp
+    src/mft_parser.cpp
     src/report.cpp
 )
 
@@ -41,4 +43,47 @@ if(BUILD_TESTING)
     add_executable(test_winforensics tests/test_main.cpp)
     target_link_libraries(test_winforensics PRIVATE winforensics_core)
     add_test(NAME UnitTests COMMAND test_winforensics)
+endif()
+
+# Qt GUI application
+option(BUILD_GUI "Build Qt GUI application" ON)
+if(BUILD_GUI)
+    find_package(Qt6 COMPONENTS Core Widgets Concurrent QUIET)
+    if(Qt6_FOUND)
+        set(QT_VER 6)
+    else()
+        find_package(Qt5 COMPONENTS Core Widgets Concurrent QUIET)
+        if(Qt5_FOUND)
+            set(QT_VER 5)
+        endif()
+    endif()
+
+    if(DEFINED QT_VER)
+        set(CMAKE_AUTOMOC ON)
+        set(CMAKE_AUTOUIC ON)
+        set(CMAKE_AUTORCC ON)
+        set(GUI_SOURCES
+            src/main_gui.cpp
+            ui/worker.cpp
+            ui/main_window.cpp
+            ui/analyze_tab.cpp
+            ui/artifacts_tab.cpp
+            ui/timeline_tab.cpp
+            ui/lnk_tab.cpp
+        )
+        add_executable(winforensics_gui WIN32 ${GUI_SOURCES})
+        target_include_directories(winforensics_gui PRIVATE include ui)
+        target_link_libraries(winforensics_gui PRIVATE
+            winforensics_core
+            Qt${QT_VER}::Core
+            Qt${QT_VER}::Widgets
+            Qt${QT_VER}::Concurrent
+        )
+        if(WIN32)
+            target_link_libraries(winforensics_gui PRIVATE shlwapi)
+        endif()
+        message(STATUS "Qt${QT_VER} GUI build enabled")
+    else()
+        message(STATUS "Qt not found -- GUI build skipped")
+    endif()
 endif()

@@ -16,6 +16,8 @@
 // ============================================================
 #include "file_info.h"           // 파일 메타데이터 수집
 #include "artifact_collector.h"  // Windows 아티팩트 수집
+#include "lnk_parser.h"          // LNK 파일 파서
+#include "mft_parser.h"          // $MFT 파서
 #include "report.h"              // 보고서 출력
 #include "common.h"              // 유틸리티 함수
 
@@ -44,6 +46,7 @@ struct Options {
     bool         prefetch    = false; // 프리패치 수집 여부
     bool         temp        = false; // 임시 파일 수집 여부
     bool         downloads   = false; // 다운로드 폴더 수집 여부
+    std::string  mftPath;             // $MFT 원시 파일 경로 (--mft 옵션)
 };
 
 // ============================================================
@@ -108,13 +111,11 @@ static Options parseArgs(int argc, char* argv[]) {
             printHelp();
             std::exit(0);
         }
-        else if (arg == "analyze" || arg == "artifacts" || arg == "timeline") {
-            // 명령어 인식
+        else if (arg == "analyze" || arg == "artifacts" ||
+                 arg == "timeline" || arg == "lnk") {
             opts.command = arg;
-            // 명령어 다음에 오는 값이 '-'로 시작하지 않으면 경로로 처리
-            // 예) "analyze C:\test" → i+1번째가 "C:\test"이므로 경로로 저장
             if (i + 1 < argc && argv[i+1][0] != '-')
-                opts.path = argv[++i]; // i를 증가시켜 경로 인자 건너뜀
+                opts.path = argv[++i];
         }
         else if (arg == "--format" && i + 1 < argc) {
             // "--format csv" → opts.format = ReportFormat::CSV
@@ -129,9 +130,9 @@ static Options parseArgs(int argc, char* argv[]) {
         else if (arg == "--recent")    opts.recent      = true; // 최근 파일 수집
         else if (arg == "--prefetch")  opts.prefetch    = true; // 프리패치 수집
         else if (arg == "--temp")      opts.temp        = true; // 임시 파일 수집
-        else if (arg == "--downloads") opts.downloads   = true; // 다운로드 수집
+        else if (arg == "--downloads") opts.downloads   = true;
+        else if (arg == "--mft" && i + 1 < argc) opts.mftPath = argv[++i];
         else if (arg == "--all") {
-            // 모든 아티팩트 수집 플래그를 한 번에 켬
             opts.recent = opts.prefetch = opts.temp = opts.downloads = true;
         }
     }
@@ -261,6 +262,50 @@ static int cmdTimeline(std::ostream& out, const Options& opts) {
 }
 
 // ============================================================
+// cmdLnk : "lnk" 명령 실행
+// ============================================================
+static int cmdLnk(std::ostream& out, const Options& opts) {
+    std::vector<LnkInfo> lnkList;
+
+    if (opts.path.empty()) {
+#ifdef _WIN32
+        std::string recent = expandEnvVar("%APPDATA%\\Microsoft\\Windows\\Recent");
+        lnkList = LnkParser::parseDirectory(recent);
+        if (lnkList.empty()) {
+            std::cerr << "Error: Recent 폴더에서 LNK 파일 없음: " << recent << "\n";
+            return 1;
+        }
+#else
+        std::cerr << "Error: lnk 명령은 경로를 지정하거나 Windows에서 실행하세요.\n";
+        return 1;
+#endif
+    } else {
+        fs::path p(opts.path);
+        std::error_code ec;
+        if (!fs::exists(p, ec)) {
+            std::cerr << "Error: 경로 없음: " << opts.path << "\n"; return 1;
+        }
+        if (fs::is_regular_file(p, ec))
+            lnkList.push_back(LnkParser::parse(opts.path));
+        else if (fs::is_directory(p, ec))
+            lnkList = LnkParser::parseDirectory(opts.path);
+        else { std::cerr << "Error: 파일/폴더가 아님\n"; return 1; }
+    }
+
+    std::vector<LnkAnalysis> results;
+    results.reserve(lnkList.size());
+    for (auto& lnk : lnkList) {
+        LnkAnalysis analysis;
+        analysis.lnk = lnk;
+        if (!opts.mftPath.empty() && lnk.success && !lnk.targetName.empty())
+            analysis.mftRecords = MftParser::findByName(opts.mftPath, lnk.targetName);
+        results.push_back(std::move(analysis));
+    }
+    Report::writeLnkAnalysis(out, results, opts.format);
+    return 0;
+}
+
+// ============================================================
 // main : 프로그램 시작점
 // ============================================================
 // C++ 프로그램은 항상 main() 함수에서 시작합니다.
@@ -302,6 +347,7 @@ int main(int argc, char* argv[]) {
     if      (opts.command == "analyze")   return cmdAnalyze(*out, opts);
     else if (opts.command == "artifacts") return cmdArtifacts(*out, opts);
     else if (opts.command == "timeline")  return cmdTimeline(*out, opts);
+    else if (opts.command == "lnk")       return cmdLnk(*out, opts);
 
     // 인식 못 한 명령어 (parseArgs 이후에도 걸릴 수 있음)
     std::cerr << "Error: unknown command '" << opts.command << "'\n";
