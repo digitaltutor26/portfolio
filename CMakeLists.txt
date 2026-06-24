@@ -9,6 +9,9 @@ if(MSVC)
     add_definitions(-DUNICODE -D_UNICODE)
 else()
     add_compile_options(-Wall -Wextra -Wpedantic)
+    if(WIN32)
+        add_compile_options(-finput-charset=utf-8 -fexec-charset=utf-8)
+    endif()
 endif()
 
 # ── 공유 라이브러리 (main.cpp 제외한 모든 모듈) ─────────────────
