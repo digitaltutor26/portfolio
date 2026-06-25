@@ -87,6 +87,8 @@ if(BUILD_GUI)
         endif()
         message(STATUS "Qt${QT_VER} GUI build enabled")
     else()
-        message(STATUS "Qt not found -- GUI build skipped")
+        message(FATAL_ERROR
+            "Qt not found.\n"
+            "Run cmake with: -DCMAKE_PREFIX_PATH=C:/Qt/6.11.1/mingw_64")
     endif()
 endif()
