@@ -37,10 +37,19 @@ echo [3/3] Deploying Qt DLLs...
 if errorlevel 1 goto fail
 
 echo.
+echo [4/4] Copying executables to project root...
+copy /y build\winforensics_gui.exe .
+copy /y build\winforensics.exe .
+:: Copy MinGW runtime DLLs needed by CLI exe
+copy /y "%MINGW_PATH%\libgcc_s_seh-1.dll" .
+copy /y "%MINGW_PATH%\libstdc++-6.dll" .
+copy /y "%MINGW_PATH%\libwinpthread-1.dll" .
+
+echo.
 echo ============================================
 echo  Build complete!
-echo  GUI : build\winforensics_gui.exe
-echo  CLI : build\winforensics.exe
+echo  GUI : winforensics_gui.exe  (double-click)
+echo  CLI : winforensics.exe --help
 echo ============================================
 echo.
 pause
