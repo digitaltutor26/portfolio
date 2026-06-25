@@ -22,32 +22,35 @@ TimelineTab::TimelineTab(QWidget* parent) : QWidget(parent) { setupUi(); }
 void TimelineTab::setupUi() {
     auto* root = new QVBoxLayout(this); root->setContentsMargins(8,8,8,8); root->setSpacing(6);
     auto* pathRow = new QHBoxLayout;
-    pathRow->addWidget(new QLabel("경로(선택):"));
-    m_pathEdit = new QLineEdit; m_pathEdit->setPlaceholderText("비워두면 아티팩트만 수집");
+    pathRow->addWidget(new QLabel(QStringLiteral("경로(선택):")));
+    m_pathEdit = new QLineEdit; m_pathEdit->setPlaceholderText(QStringLiteral("비워두면 아티팩트만 수집"));
     pathRow->addWidget(m_pathEdit);
-    m_browseBtn = new QPushButton("찾아보기..."); pathRow->addWidget(m_browseBtn);
+    m_browseBtn = new QPushButton(QStringLiteral("찾아보기...")); pathRow->addWidget(m_browseBtn);
     root->addLayout(pathRow);
-    auto* grp = new QGroupBox("옵션"); auto* optLayout = new QHBoxLayout(grp);
-    m_hashCheck=new QCheckBox("해시"); m_recursiveCheck=new QCheckBox("재귀");
-    m_recentCheck=new QCheckBox("Recent"); m_recentCheck->setChecked(true);
-    m_prefetchCheck=new QCheckBox("Prefetch"); m_prefetchCheck->setChecked(true);
-    m_tempCheck=new QCheckBox("Temp"); m_downloadsCheck=new QCheckBox("Downloads");
-    m_generateBtn=new QPushButton("타임라인 생성"); m_generateBtn->setDefault(true);
+    auto* grp = new QGroupBox(QStringLiteral("옵션")); auto* optLayout = new QHBoxLayout(grp);
+    m_hashCheck=new QCheckBox(QStringLiteral("해시")); m_recursiveCheck=new QCheckBox(QStringLiteral("재귀"));
+    m_recentCheck=new QCheckBox(QStringLiteral("Recent")); m_recentCheck->setChecked(true);
+    m_prefetchCheck=new QCheckBox(QStringLiteral("Prefetch")); m_prefetchCheck->setChecked(true);
+    m_tempCheck=new QCheckBox(QStringLiteral("Temp")); m_downloadsCheck=new QCheckBox(QStringLiteral("Downloads"));
+    m_generateBtn=new QPushButton(QStringLiteral("타임라인 생성")); m_generateBtn->setDefault(true);
     optLayout->addWidget(m_hashCheck); optLayout->addWidget(m_recursiveCheck); optLayout->addSpacing(8);
     optLayout->addWidget(m_recentCheck); optLayout->addWidget(m_prefetchCheck);
     optLayout->addWidget(m_tempCheck); optLayout->addWidget(m_downloadsCheck);
     optLayout->addStretch(); optLayout->addWidget(m_generateBtn);
     root->addWidget(grp);
     m_progress = new QProgressBar; m_progress->setRange(0,0); m_progress->setVisible(false); root->addWidget(m_progress);
-    m_statusLabel = new QLabel("준비"); root->addWidget(m_statusLabel);
+    m_statusLabel = new QLabel(QStringLiteral("준비")); root->addWidget(m_statusLabel);
     m_table = new QTableWidget(0,4);
-    m_table->setHorizontalHeaderLabels({"시각","이벤트 종류","설명","경로"});
+    m_table->setHorizontalHeaderLabels({
+        QStringLiteral("시각"), QStringLiteral("이벤트 종류"),
+        QStringLiteral("설명"), QStringLiteral("경로")
+    });
     m_table->horizontalHeader()->setStretchLastSection(true);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers); root->addWidget(m_table);
     auto* exportRow = new QHBoxLayout;
-    m_exportCsvBtn=new QPushButton("CSV 저장"); m_exportCsvBtn->setEnabled(false);
-    m_exportJsonBtn=new QPushButton("JSON 저장"); m_exportJsonBtn->setEnabled(false);
+    m_exportCsvBtn=new QPushButton(QStringLiteral("CSV 저장")); m_exportCsvBtn->setEnabled(false);
+    m_exportJsonBtn=new QPushButton(QStringLiteral("JSON 저장")); m_exportJsonBtn->setEnabled(false);
     exportRow->addStretch(); exportRow->addWidget(m_exportCsvBtn); exportRow->addWidget(m_exportJsonBtn);
     root->addLayout(exportRow);
     connect(m_browseBtn,   &QPushButton::clicked, this, &TimelineTab::onBrowse);
@@ -57,8 +60,8 @@ void TimelineTab::setupUi() {
 }
 
 void TimelineTab::onBrowse() {
-    QString p = QFileDialog::getExistingDirectory(this,"폴더 선택",{},QFileDialog::ShowDirsOnly);
-    if (p.isEmpty()) p = QFileDialog::getOpenFileName(this,"파일 선택");
+    QString p = QFileDialog::getExistingDirectory(this,QStringLiteral("폴더 선택"),{},QFileDialog::ShowDirsOnly);
+    if (p.isEmpty()) p = QFileDialog::getOpenFileName(this,QStringLiteral("파일 선택"));
     if (!p.isEmpty()) m_pathEdit->setText(p);
 }
 
@@ -86,13 +89,14 @@ void TimelineTab::onFinished() {
     m_exportCsvBtn->setEnabled(m_table->rowCount()>0);
     m_exportJsonBtn->setEnabled(m_table->rowCount()>0);
 }
-void TimelineTab::onError(QString msg)  { setRunning(false); QMessageBox::critical(this,"오류",msg); }
+void TimelineTab::onError(QString msg)  { setRunning(false); QMessageBox::critical(this,QStringLiteral("오류"),msg); }
 void TimelineTab::onStatus(QString msg) { m_statusLabel->setText(msg); }
 
 void TimelineTab::populateTable(const std::vector<TimelineEvent>& events) {
     static const QMap<QString,QColor> colorMap{
-        {"Created",QColor(220,255,220)},{"Modified",QColor(255,240,200)},
-        {"Accessed",QColor(220,235,255)},{"RecentFile",QColor(255,220,255)},{"Prefetch",QColor(255,235,220)}
+        {QStringLiteral("Created"),QColor(220,255,220)},{QStringLiteral("Modified"),QColor(255,240,200)},
+        {QStringLiteral("Accessed"),QColor(220,235,255)},{QStringLiteral("RecentFile"),QColor(255,220,255)},
+        {QStringLiteral("Prefetch"),QColor(255,235,220)}
     };
     m_table->setRowCount(static_cast<int>(events.size()));
     for (int r=0; r<static_cast<int>(events.size()); ++r) {
@@ -110,17 +114,17 @@ void TimelineTab::setRunning(bool r) { m_generateBtn->setEnabled(!r); m_browseBt
 
 void TimelineTab::onExportCsv() {
     if (!m_worker) return;
-    QString path=QFileDialog::getSaveFileName(this,"CSV 저장","timeline.csv","CSV (*.csv)");
+    QString path=QFileDialog::getSaveFileName(this,QStringLiteral("CSV 저장"),QStringLiteral("timeline.csv"),QStringLiteral("CSV (*.csv)"));
     if (path.isEmpty()) return;
-    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,"오류","저장 실패"); return; }
+    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,QStringLiteral("오류"),QStringLiteral("저장 실패")); return; }
     Report::writeTimeline(f, m_worker->results, ReportFormat::CSV);
-    m_statusLabel->setText("CSV 저장: "+path);
+    m_statusLabel->setText(QStringLiteral("CSV 저장: ")+path);
 }
 void TimelineTab::onExportJson() {
     if (!m_worker) return;
-    QString path=QFileDialog::getSaveFileName(this,"JSON 저장","timeline.json","JSON (*.json)");
+    QString path=QFileDialog::getSaveFileName(this,QStringLiteral("JSON 저장"),QStringLiteral("timeline.json"),QStringLiteral("JSON (*.json)"));
     if (path.isEmpty()) return;
-    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,"오류","저장 실패"); return; }
+    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,QStringLiteral("오류"),QStringLiteral("저장 실패")); return; }
     Report::writeTimeline(f, m_worker->results, ReportFormat::JSON);
-    m_statusLabel->setText("JSON 저장: "+path);
+    m_statusLabel->setText(QStringLiteral("JSON 저장: ")+path);
 }

@@ -22,40 +22,48 @@ LnkTab::LnkTab(QWidget* parent) : QWidget(parent) { setupUi(); }
 
 void LnkTab::setupUi() {
     auto* root = new QVBoxLayout(this); root->setContentsMargins(8,8,8,8); root->setSpacing(6);
-    auto* grp = new QGroupBox("입력"); auto* gl = new QVBoxLayout(grp);
+    auto* grp = new QGroupBox(QStringLiteral("입력")); auto* gl = new QVBoxLayout(grp);
     auto* lnkRow = new QHBoxLayout;
-    lnkRow->addWidget(new QLabel("LNK 경로:"));
-    m_lnkPathEdit = new QLineEdit; m_lnkPathEdit->setPlaceholderText(".lnk 파일 또는 폴더 (Recent 등)");
+    lnkRow->addWidget(new QLabel(QStringLiteral("LNK 경로:")));
+    m_lnkPathEdit = new QLineEdit; m_lnkPathEdit->setPlaceholderText(QStringLiteral(".lnk 파일 또는 폴더 (Recent 등)"));
     lnkRow->addWidget(m_lnkPathEdit);
-    m_browseLnkBtn = new QPushButton("찾아보기..."); lnkRow->addWidget(m_browseLnkBtn);
+    m_browseLnkBtn = new QPushButton(QStringLiteral("찾아보기...")); lnkRow->addWidget(m_browseLnkBtn);
     gl->addLayout(lnkRow);
     auto* mftRow = new QHBoxLayout;
-    mftRow->addWidget(new QLabel("$MFT 경로:"));
-    m_mftPathEdit = new QLineEdit; m_mftPathEdit->setPlaceholderText("(선택) 원시 $MFT 파일 — $SI/$FN 비교");
+    mftRow->addWidget(new QLabel(QStringLiteral("$MFT 경로:")));
+    m_mftPathEdit = new QLineEdit; m_mftPathEdit->setPlaceholderText(QStringLiteral("(선택) 원시 $MFT 파일 — $SI/$FN 비교"));
     mftRow->addWidget(m_mftPathEdit);
-    m_browseMftBtn = new QPushButton("찾아보기..."); mftRow->addWidget(m_browseMftBtn);
+    m_browseMftBtn = new QPushButton(QStringLiteral("찾아보기...")); mftRow->addWidget(m_browseMftBtn);
     gl->addLayout(mftRow);
     auto* btnRow = new QHBoxLayout; btnRow->addStretch();
-    m_analyzeBtn = new QPushButton("분석 시작"); m_analyzeBtn->setDefault(true);
+    m_analyzeBtn = new QPushButton(QStringLiteral("분석 시작")); m_analyzeBtn->setDefault(true);
     btnRow->addWidget(m_analyzeBtn); gl->addLayout(btnRow);
     root->addWidget(grp);
     m_progress = new QProgressBar; m_progress->setRange(0,0); m_progress->setVisible(false); root->addWidget(m_progress);
-    m_statusLabel = new QLabel("준비"); root->addWidget(m_statusLabel);
+    m_statusLabel = new QLabel(QStringLiteral("준비")); root->addWidget(m_statusLabel);
 
     auto* splitter = new QSplitter(Qt::Vertical);
-    auto* lnkGrp = new QGroupBox("LNK 파일 목록 (선택하면 $SI/$FN 표시)");
+    auto* lnkGrp = new QGroupBox(QStringLiteral("LNK 파일 목록 (선택하면 $SI/$FN 표시)"));
     auto* lgl = new QVBoxLayout(lnkGrp);
     m_lnkTable = new QTableWidget(0,9);
-    m_lnkTable->setHorizontalHeaderLabels({"LNK 파일","대상 경로","드라이브","시리얼","레이블","컴퓨터","생성","수정","접근"});
+    m_lnkTable->setHorizontalHeaderLabels({
+        QStringLiteral("LNK 파일"), QStringLiteral("대상 경로"), QStringLiteral("드라이브"),
+        QStringLiteral("시리얼"), QStringLiteral("레이블"), QStringLiteral("컴퓨터"),
+        QStringLiteral("생성"), QStringLiteral("수정"), QStringLiteral("접근")
+    });
     m_lnkTable->horizontalHeader()->setSectionResizeMode(1,QHeaderView::Stretch);
     m_lnkTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_lnkTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     lgl->addWidget(m_lnkTable); splitter->addWidget(lnkGrp);
 
-    auto* mftGrp = new QGroupBox("$MFT 타임스탬프 ($SI vs $FN)");
+    auto* mftGrp = new QGroupBox(QStringLiteral("$MFT 타임스탬프 ($SI vs $FN)"));
     auto* mgl = new QVBoxLayout(mftGrp);
     m_mftTable = new QTableWidget(0,11);
-    m_mftTable->setHorizontalHeaderLabels({"레코드#","파일명","상태","$SI 생성","$SI 수정","$SI MFT수정","$SI 접근","$FN 생성","$FN 수정","$FN MFT수정","$FN 접근"});
+    m_mftTable->setHorizontalHeaderLabels({
+        QStringLiteral("레코드#"), QStringLiteral("파일명"), QStringLiteral("상태"),
+        QStringLiteral("$SI 생성"), QStringLiteral("$SI 수정"), QStringLiteral("$SI MFT수정"), QStringLiteral("$SI 접근"),
+        QStringLiteral("$FN 생성"), QStringLiteral("$FN 수정"), QStringLiteral("$FN MFT수정"), QStringLiteral("$FN 접근")
+    });
     m_mftTable->horizontalHeader()->setStretchLastSection(true);
     m_mftTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_mftTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -63,8 +71,8 @@ void LnkTab::setupUi() {
     root->addWidget(splitter);
 
     auto* exportRow = new QHBoxLayout;
-    m_exportCsvBtn=new QPushButton("CSV 저장"); m_exportCsvBtn->setEnabled(false);
-    m_exportJsonBtn=new QPushButton("JSON 저장"); m_exportJsonBtn->setEnabled(false);
+    m_exportCsvBtn=new QPushButton(QStringLiteral("CSV 저장")); m_exportCsvBtn->setEnabled(false);
+    m_exportJsonBtn=new QPushButton(QStringLiteral("JSON 저장")); m_exportJsonBtn->setEnabled(false);
     exportRow->addStretch(); exportRow->addWidget(m_exportCsvBtn); exportRow->addWidget(m_exportJsonBtn);
     root->addLayout(exportRow);
 
@@ -80,17 +88,17 @@ void LnkTab::setupUi() {
 }
 
 void LnkTab::onBrowseLnk() {
-    QString p=QFileDialog::getExistingDirectory(this,"LNK 폴더");
-    if (p.isEmpty()) p=QFileDialog::getOpenFileName(this,"LNK 파일",{},"LNK (*.lnk);;전체 (*)");
+    QString p=QFileDialog::getExistingDirectory(this,QStringLiteral("LNK 폴더"));
+    if (p.isEmpty()) p=QFileDialog::getOpenFileName(this,QStringLiteral("LNK 파일"),{},QStringLiteral("LNK (*.lnk);;전체 (*)"));
     if (!p.isEmpty()) m_lnkPathEdit->setText(p);
 }
 void LnkTab::onBrowseMft() {
-    QString p=QFileDialog::getOpenFileName(this,"$MFT 파일",{},"전체 (*)");
+    QString p=QFileDialog::getOpenFileName(this,QStringLiteral("$MFT 파일"),{},QStringLiteral("전체 (*)"));
     if (!p.isEmpty()) m_mftPathEdit->setText(p);
 }
 
 void LnkTab::onAnalyze() {
-    if (m_lnkPathEdit->text().trimmed().isEmpty()) { QMessageBox::warning(this,"경고","LNK 경로를 입력하세요."); return; }
+    if (m_lnkPathEdit->text().trimmed().isEmpty()) { QMessageBox::warning(this,QStringLiteral("경고"),QStringLiteral("LNK 경로를 입력하세요.")); return; }
     if (m_thread && m_thread->isRunning()) return;
     m_lnkTable->setRowCount(0); m_mftTable->setRowCount(0);
     m_exportCsvBtn->setEnabled(false); m_exportJsonBtn->setEnabled(false); m_results.clear();
@@ -111,7 +119,7 @@ void LnkTab::onFinished() {
     m_results=m_worker->results; populateLnkTable(m_results); setRunning(false);
     m_exportCsvBtn->setEnabled(!m_results.empty()); m_exportJsonBtn->setEnabled(!m_results.empty());
 }
-void LnkTab::onError(QString msg)  { setRunning(false); QMessageBox::critical(this,"오류",msg); }
+void LnkTab::onError(QString msg)  { setRunning(false); QMessageBox::critical(this,QStringLiteral("오류"),msg); }
 void LnkTab::onStatus(QString msg) { m_statusLabel->setText(msg); }
 
 void LnkTab::populateLnkTable(const std::vector<LnkAnalysis>& results) {
@@ -142,7 +150,8 @@ void LnkTab::populateMftTable(const LnkAnalysis& analysis) {
     const auto& recs=analysis.mftRecords;
     if (recs.empty()) {
         m_mftTable->clearSpans(); m_mftTable->setRowCount(1); m_mftTable->setSpan(0,0,1,11);
-        auto* item=new QTableWidgetItem(m_mftPathEdit->text().isEmpty()?"$MFT 경로 미지정":"매칭 레코드 없음");
+        auto* item=new QTableWidgetItem(m_mftPathEdit->text().isEmpty()
+            ? QStringLiteral("$MFT 경로 미지정") : QStringLiteral("매칭 레코드 없음"));
         item->setTextAlignment(Qt::AlignCenter); item->setForeground(QColor(120,120,120));
         m_mftTable->setItem(0,0,item); return;
     }
@@ -152,7 +161,9 @@ void LnkTab::populateMftTable(const LnkAnalysis& analysis) {
         QColor bg=rec.timestampAnomaly?QColor(255,200,200):QColor(220,255,220);
         auto set=[&](int col,const QString& val){ auto* item=new QTableWidgetItem(val); item->setBackground(bg); m_mftTable->setItem(r,col,item); };
         set(0,QString::number(rec.recordNumber)); set(1,QString::fromStdString(rec.fileName));
-        QString st=rec.isDeleted?"삭제됨":"활성"; if(rec.isDirectory)st+="/폴더"; if(rec.timestampAnomaly)st+=" ⚠";
+        QString st=rec.isDeleted?QStringLiteral("삭제됨"):QStringLiteral("활성");
+        if(rec.isDirectory) st+=QStringLiteral("/폴더");
+        if(rec.timestampAnomaly) st+=QStringLiteral(" ⚠");
         set(2,st);
         set(3,QString::fromStdString(rec.siTimes.createdStr)); set(4,QString::fromStdString(rec.siTimes.modifiedStr));
         set(5,QString::fromStdString(rec.siTimes.mftModifiedStr)); set(6,QString::fromStdString(rec.siTimes.accessedStr));
@@ -169,17 +180,17 @@ void LnkTab::setRunning(bool r) {
 }
 
 void LnkTab::onExportCsv() {
-    QString path=QFileDialog::getSaveFileName(this,"CSV 저장","lnk_report.csv","CSV (*.csv)");
+    QString path=QFileDialog::getSaveFileName(this,QStringLiteral("CSV 저장"),QStringLiteral("lnk_report.csv"),QStringLiteral("CSV (*.csv)"));
     if (path.isEmpty()) return;
-    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,"오류","저장 실패"); return; }
+    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,QStringLiteral("오류"),QStringLiteral("저장 실패")); return; }
     Report::writeLnkAnalysis(f, m_results, ReportFormat::CSV);
-    m_statusLabel->setText("CSV 저장: "+path);
+    m_statusLabel->setText(QStringLiteral("CSV 저장: ")+path);
 }
 void LnkTab::onExportJson() {
-    QString path=QFileDialog::getSaveFileName(this,"JSON 저장","lnk_report.json","JSON (*.json)");
+    QString path=QFileDialog::getSaveFileName(this,QStringLiteral("JSON 저장"),QStringLiteral("lnk_report.json"),QStringLiteral("JSON (*.json)"));
     if (path.isEmpty()) return;
-    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,"오류","저장 실패"); return; }
+    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,QStringLiteral("오류"),QStringLiteral("저장 실패")); return; }
     Report::writeLnkAnalysis(f, m_results, ReportFormat::JSON);
-    m_statusLabel->setText("JSON 저장: "+path);
+    m_statusLabel->setText(QStringLiteral("JSON 저장: ")+path);
 }
 void LnkTab::onLnkSelectionChanged() {}

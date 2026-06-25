@@ -19,28 +19,31 @@ ArtifactsTab::ArtifactsTab(QWidget* parent) : QWidget(parent) { setupUi(); }
 
 void ArtifactsTab::setupUi() {
     auto* root = new QVBoxLayout(this); root->setContentsMargins(8,8,8,8); root->setSpacing(6);
-    auto* grp = new QGroupBox("수집 항목"); auto* optRow = new QHBoxLayout(grp);
-    m_recentCheck    = new QCheckBox("Recent"); m_recentCheck->setChecked(true);
-    m_prefetchCheck  = new QCheckBox("Prefetch"); m_prefetchCheck->setChecked(true);
-    m_tempCheck      = new QCheckBox("Temp"); m_tempCheck->setChecked(true);
-    m_downloadsCheck = new QCheckBox("Downloads"); m_downloadsCheck->setChecked(true);
-    m_collectBtn     = new QPushButton("수집 시작"); m_collectBtn->setDefault(true);
+    auto* grp = new QGroupBox(QStringLiteral("수집 항목")); auto* optRow = new QHBoxLayout(grp);
+    m_recentCheck    = new QCheckBox(QStringLiteral("Recent")); m_recentCheck->setChecked(true);
+    m_prefetchCheck  = new QCheckBox(QStringLiteral("Prefetch")); m_prefetchCheck->setChecked(true);
+    m_tempCheck      = new QCheckBox(QStringLiteral("Temp")); m_tempCheck->setChecked(true);
+    m_downloadsCheck = new QCheckBox(QStringLiteral("Downloads")); m_downloadsCheck->setChecked(true);
+    m_collectBtn     = new QPushButton(QStringLiteral("수집 시작")); m_collectBtn->setDefault(true);
     optRow->addWidget(m_recentCheck); optRow->addWidget(m_prefetchCheck);
     optRow->addWidget(m_tempCheck); optRow->addWidget(m_downloadsCheck);
     optRow->addStretch(); optRow->addWidget(m_collectBtn);
     root->addWidget(grp);
     m_progress = new QProgressBar; m_progress->setRange(0,0); m_progress->setVisible(false);
     root->addWidget(m_progress);
-    m_statusLabel = new QLabel("준비  (Windows에서만 실제 데이터 수집)"); root->addWidget(m_statusLabel);
+    m_statusLabel = new QLabel(QStringLiteral("준비  (Windows에서만 실제 데이터 수집)")); root->addWidget(m_statusLabel);
     m_table = new QTableWidget(0, 6);
-    m_table->setHorizontalHeaderLabels({"종류","이름","경로","시각","크기(B)","설명"});
+    m_table->setHorizontalHeaderLabels({
+        QStringLiteral("종류"), QStringLiteral("이름"), QStringLiteral("경로"),
+        QStringLiteral("시각"), QStringLiteral("크기(B)"), QStringLiteral("설명")
+    });
     m_table->horizontalHeader()->setStretchLastSection(true);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_table->setSortingEnabled(true); root->addWidget(m_table);
     auto* exportRow = new QHBoxLayout;
-    m_exportCsvBtn  = new QPushButton("CSV 저장"); m_exportCsvBtn->setEnabled(false);
-    m_exportJsonBtn = new QPushButton("JSON 저장"); m_exportJsonBtn->setEnabled(false);
+    m_exportCsvBtn  = new QPushButton(QStringLiteral("CSV 저장")); m_exportCsvBtn->setEnabled(false);
+    m_exportJsonBtn = new QPushButton(QStringLiteral("JSON 저장")); m_exportJsonBtn->setEnabled(false);
     exportRow->addStretch(); exportRow->addWidget(m_exportCsvBtn); exportRow->addWidget(m_exportJsonBtn);
     root->addLayout(exportRow);
     connect(m_collectBtn,   &QPushButton::clicked, this, &ArtifactsTab::onCollect);
@@ -70,7 +73,7 @@ void ArtifactsTab::onFinished() {
     m_exportCsvBtn->setEnabled(m_table->rowCount()>0);
     m_exportJsonBtn->setEnabled(m_table->rowCount()>0);
 }
-void ArtifactsTab::onError(QString msg)  { setRunning(false); QMessageBox::critical(this,"오류",msg); }
+void ArtifactsTab::onError(QString msg)  { setRunning(false); QMessageBox::critical(this,QStringLiteral("오류"),msg); }
 void ArtifactsTab::onStatus(QString msg) { m_statusLabel->setText(msg); }
 
 void ArtifactsTab::populateTable(const std::vector<Artifact>& artifacts) {
@@ -90,18 +93,18 @@ void ArtifactsTab::setRunning(bool running) { m_collectBtn->setEnabled(!running)
 
 void ArtifactsTab::onExportCsv() {
     if (!m_worker) return;
-    QString path = QFileDialog::getSaveFileName(this,"CSV 저장","artifacts.csv","CSV (*.csv)");
+    QString path = QFileDialog::getSaveFileName(this,QStringLiteral("CSV 저장"),QStringLiteral("artifacts.csv"),QStringLiteral("CSV (*.csv)"));
     if (path.isEmpty()) return;
-    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,"오류","저장 실패"); return; }
+    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,QStringLiteral("오류"),QStringLiteral("저장 실패")); return; }
     Report::writeArtifacts(f, m_worker->results, ReportFormat::CSV);
-    m_statusLabel->setText("CSV 저장: " + path);
+    m_statusLabel->setText(QStringLiteral("CSV 저장: ") + path);
 }
 
 void ArtifactsTab::onExportJson() {
     if (!m_worker) return;
-    QString path = QFileDialog::getSaveFileName(this,"JSON 저장","artifacts.json","JSON (*.json)");
+    QString path = QFileDialog::getSaveFileName(this,QStringLiteral("JSON 저장"),QStringLiteral("artifacts.json"),QStringLiteral("JSON (*.json)"));
     if (path.isEmpty()) return;
-    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,"오류","저장 실패"); return; }
+    std::ofstream f(path.toStdString()); if (!f) { QMessageBox::critical(this,QStringLiteral("오류"),QStringLiteral("저장 실패")); return; }
     Report::writeArtifacts(f, m_worker->results, ReportFormat::JSON);
-    m_statusLabel->setText("JSON 저장: " + path);
+    m_statusLabel->setText(QStringLiteral("JSON 저장: ") + path);
 }

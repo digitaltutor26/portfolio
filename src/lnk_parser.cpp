@@ -65,7 +65,7 @@ std::string LnkParser::formatSerial(uint32_t serial) {
 }
 
 std::vector<uint8_t> LnkParser::readFile(const std::string& path) {
-    std::ifstream f(path, std::ios::binary | std::ios::ate);
+    std::ifstream f(fs::u8path(path), std::ios::binary | std::ios::ate);
     if (!f) return {};
     auto sz = f.tellg();
     if (sz <= 0) return {};
@@ -105,7 +105,7 @@ void LnkParser::parseTrackerData(const uint8_t* data, size_t size, LnkInfo& info
 LnkInfo LnkParser::parse(const std::string& lnkPath) {
     LnkInfo info;
     info.lnkPath = lnkPath;
-    info.lnkName = fs::path(lnkPath).filename().string();
+    info.lnkName = fs::u8path(lnkPath).filename().u8string();
 
     auto buf = readFile(lnkPath);
     if (buf.size() < 76) { info.errorMsg = "File too small"; return info; }
@@ -243,7 +243,7 @@ std::vector<LnkInfo> LnkParser::parseDirectory(const std::string& dirPath) {
         if (!entry.is_regular_file(ec)) continue;
         std::string ext = entry.path().extension().string();
         std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-        if (ext == ".lnk") results.push_back(parse(entry.path().string()));
+        if (ext == ".lnk") results.push_back(parse(entry.path().u8string()));
     }
     return results;
 }

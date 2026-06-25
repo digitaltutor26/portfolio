@@ -22,31 +22,36 @@ void AnalyzeTab::setupUi() {
     auto* root = new QVBoxLayout(this);
     root->setContentsMargins(8,8,8,8); root->setSpacing(6);
     auto* pathRow = new QHBoxLayout;
-    pathRow->addWidget(new QLabel("경로:"));
-    m_pathEdit = new QLineEdit; m_pathEdit->setPlaceholderText("파일 또는 폴더 경로...");
+    pathRow->addWidget(new QLabel(QStringLiteral("경로:")));
+    m_pathEdit = new QLineEdit; m_pathEdit->setPlaceholderText(QStringLiteral("파일 또는 폴더 경로..."));
     pathRow->addWidget(m_pathEdit);
-    m_browseBtn = new QPushButton("찾아보기..."); pathRow->addWidget(m_browseBtn);
+    m_browseBtn = new QPushButton(QStringLiteral("찾아보기...")); pathRow->addWidget(m_browseBtn);
     root->addLayout(pathRow);
     auto* optRow = new QHBoxLayout;
-    m_hashCheck      = new QCheckBox("해시 계산 (MD5+SHA256)");
-    m_recursiveCheck = new QCheckBox("재귀 탐색");
-    m_analyzeBtn     = new QPushButton("분석 시작"); m_analyzeBtn->setDefault(true);
+    m_hashCheck      = new QCheckBox(QStringLiteral("해시 계산 (MD5+SHA256)"));
+    m_recursiveCheck = new QCheckBox(QStringLiteral("재귀 탐색"));
+    m_analyzeBtn     = new QPushButton(QStringLiteral("분석 시작")); m_analyzeBtn->setDefault(true);
     optRow->addWidget(m_hashCheck); optRow->addWidget(m_recursiveCheck);
     optRow->addStretch(); optRow->addWidget(m_analyzeBtn);
     root->addLayout(optRow);
     m_progress = new QProgressBar; m_progress->setRange(0,0); m_progress->setVisible(false);
     root->addWidget(m_progress);
-    m_statusLabel = new QLabel("준비"); root->addWidget(m_statusLabel);
+    m_statusLabel = new QLabel(QStringLiteral("준비")); root->addWidget(m_statusLabel);
     m_table = new QTableWidget(0, 12);
-    m_table->setHorizontalHeaderLabels({"파일명","크기(B)","카테고리","매직","생성","수정","접근","숨김","시스템","읽기전용","MD5","SHA256"});
+    m_table->setHorizontalHeaderLabels({
+        QStringLiteral("파일명"), QStringLiteral("크기(B)"), QStringLiteral("카테고리"),
+        QStringLiteral("매직"), QStringLiteral("생성"), QStringLiteral("수정"), QStringLiteral("접근"),
+        QStringLiteral("숨김"), QStringLiteral("시스템"), QStringLiteral("읽기전용"),
+        QStringLiteral("MD5"), QStringLiteral("SHA256")
+    });
     m_table->horizontalHeader()->setStretchLastSection(true);
     m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_table->setSortingEnabled(true);
     root->addWidget(m_table);
     auto* exportRow = new QHBoxLayout;
-    m_exportCsvBtn  = new QPushButton("CSV 저장"); m_exportCsvBtn->setEnabled(false);
-    m_exportJsonBtn = new QPushButton("JSON 저장"); m_exportJsonBtn->setEnabled(false);
+    m_exportCsvBtn  = new QPushButton(QStringLiteral("CSV 저장")); m_exportCsvBtn->setEnabled(false);
+    m_exportJsonBtn = new QPushButton(QStringLiteral("JSON 저장")); m_exportJsonBtn->setEnabled(false);
     exportRow->addStretch(); exportRow->addWidget(m_exportCsvBtn); exportRow->addWidget(m_exportJsonBtn);
     root->addLayout(exportRow);
     connect(m_browseBtn,    &QPushButton::clicked, this, &AnalyzeTab::onBrowse);
@@ -56,13 +61,13 @@ void AnalyzeTab::setupUi() {
 }
 
 void AnalyzeTab::onBrowse() {
-    QString path = QFileDialog::getExistingDirectory(this,"폴더 선택",{},QFileDialog::ShowDirsOnly);
-    if (path.isEmpty()) path = QFileDialog::getOpenFileName(this,"파일 선택");
+    QString path = QFileDialog::getExistingDirectory(this,QStringLiteral("폴더 선택"),{},QFileDialog::ShowDirsOnly);
+    if (path.isEmpty()) path = QFileDialog::getOpenFileName(this,QStringLiteral("파일 선택"));
     if (!path.isEmpty()) m_pathEdit->setText(path);
 }
 
 void AnalyzeTab::onAnalyze() {
-    if (m_pathEdit->text().trimmed().isEmpty()) { QMessageBox::warning(this,"경고","경로를 입력하세요."); return; }
+    if (m_pathEdit->text().trimmed().isEmpty()) { QMessageBox::warning(this,QStringLiteral("경고"),QStringLiteral("경로를 입력하세요.")); return; }
     if (m_thread && m_thread->isRunning()) return;
     m_table->setRowCount(0); m_exportCsvBtn->setEnabled(false); m_exportJsonBtn->setEnabled(false);
     m_worker = new AnalyzeWorker;
@@ -86,7 +91,7 @@ void AnalyzeTab::onFinished() {
     m_exportCsvBtn->setEnabled(m_table->rowCount()>0);
     m_exportJsonBtn->setEnabled(m_table->rowCount()>0);
 }
-void AnalyzeTab::onError(QString msg)  { setRunning(false); QMessageBox::critical(this,"오류",msg); }
+void AnalyzeTab::onError(QString msg)  { setRunning(false); QMessageBox::critical(this,QStringLiteral("오류"),msg); }
 void AnalyzeTab::onStatus(QString msg) { m_statusLabel->setText(msg); }
 
 void AnalyzeTab::populateTable(const std::vector<FileInfo>& files) {
@@ -99,7 +104,9 @@ void AnalyzeTab::populateTable(const std::vector<FileInfo>& files) {
         set(2, QString::fromStdString(FileInfoCollector::categoryName(f.category)));
         set(3, QString::fromStdString(f.magic)); set(4, QString::fromStdString(f.created));
         set(5, QString::fromStdString(f.modified)); set(6, QString::fromStdString(f.accessed));
-        set(7, f.isHidden?"예":"아니오"); set(8, f.isSystem?"예":"아니오"); set(9, f.isReadOnly?"예":"아니오");
+        set(7, f.isHidden?QStringLiteral("예"):QStringLiteral("아니오"));
+        set(8, f.isSystem?QStringLiteral("예"):QStringLiteral("아니오"));
+        set(9, f.isReadOnly?QStringLiteral("예"):QStringLiteral("아니오"));
         set(10,QString::fromStdString(f.md5)); set(11,QString::fromStdString(f.sha256));
         m_table->item(r,0)->setToolTip(QString::fromStdString(f.path));
     }
@@ -113,20 +120,20 @@ void AnalyzeTab::setRunning(bool running) {
 
 void AnalyzeTab::onExportCsv() {
     if (!m_worker) return;
-    QString path = QFileDialog::getSaveFileName(this,"CSV 저장","analyze_report.csv","CSV (*.csv)");
+    QString path = QFileDialog::getSaveFileName(this,QStringLiteral("CSV 저장"),QStringLiteral("analyze_report.csv"),QStringLiteral("CSV (*.csv)"));
     if (path.isEmpty()) return;
     std::ofstream f(path.toStdString());
-    if (!f) { QMessageBox::critical(this,"오류","저장 실패"); return; }
+    if (!f) { QMessageBox::critical(this,QStringLiteral("오류"),QStringLiteral("저장 실패")); return; }
     Report::writeFileInfoList(f, m_worker->results, ReportFormat::CSV);
-    m_statusLabel->setText("CSV 저장: " + path);
+    m_statusLabel->setText(QStringLiteral("CSV 저장: ") + path);
 }
 
 void AnalyzeTab::onExportJson() {
     if (!m_worker) return;
-    QString path = QFileDialog::getSaveFileName(this,"JSON 저장","analyze_report.json","JSON (*.json)");
+    QString path = QFileDialog::getSaveFileName(this,QStringLiteral("JSON 저장"),QStringLiteral("analyze_report.json"),QStringLiteral("JSON (*.json)"));
     if (path.isEmpty()) return;
     std::ofstream f(path.toStdString());
-    if (!f) { QMessageBox::critical(this,"오류","저장 실패"); return; }
+    if (!f) { QMessageBox::critical(this,QStringLiteral("오류"),QStringLiteral("저장 실패")); return; }
     Report::writeFileInfoList(f, m_worker->results, ReportFormat::JSON);
-    m_statusLabel->setText("JSON 저장: " + path);
+    m_statusLabel->setText(QStringLiteral("JSON 저장: ") + path);
 }
