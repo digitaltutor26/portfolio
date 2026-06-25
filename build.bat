@@ -19,8 +19,11 @@ echo  WinForensics Build  (Qt %QT_VER% / MinGW)
 echo ============================================
 echo.
 
+:: Clear cmake cache so Qt is re-detected cleanly
+if exist build\CMakeCache.txt del /f build\CMakeCache.txt
+
 echo [1/3] CMake configure...
-cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%QT_PATH%
+cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=%QT_PATH%"
 if errorlevel 1 goto fail
 
 echo.
@@ -30,7 +33,7 @@ if errorlevel 1 goto fail
 
 echo.
 echo [3/3] Deploying Qt DLLs...
-%QT_PATH%\bin\windeployqt6.exe build\winforensics_gui.exe
+"%QT_PATH%\bin\windeployqt6.exe" "build\winforensics_gui.exe"
 if errorlevel 1 goto fail
 
 echo.
