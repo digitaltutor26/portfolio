@@ -159,8 +159,8 @@ FileInfo FileInfoCollector::collect(const fs::path& path, bool computeHash) {
     FileInfo fi; // 결과를 담을 구조체 (모든 필드가 기본값으로 초기화됨)
 
     // ── 경로와 파일명 추출 ──────────────────────────────────────
-    fi.path = path.string();           // 예: C:\Users\test\notepad.exe
-    fi.name = path.filename().string(); // 예: notepad.exe
+    fi.path = path.u8string();           // 예: C:\Users\test\notepad.exe
+    fi.name = path.filename().u8string(); // 예: notepad.exe
 
     // ── 확장자 추출 및 소문자 변환 ─────────────────────────────
     // path.extension()은 "." 포함해서 반환하므로 첫 글자(.) 제거

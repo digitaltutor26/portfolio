@@ -21,11 +21,13 @@
 // ============================================================
 #pragma once
 
-#include "file_info.h"        // FileInfo 구조체
-#include "artifact_collector.h" // Artifact 구조체
+#include "file_info.h"           // FileInfo 구조체
+#include "artifact_collector.h"  // Artifact 구조체
+#include "lnk_parser.h"          // LnkInfo 구조체
+#include "mft_parser.h"          // MftRecord 구조체
 #include <string>
 #include <vector>
-#include <ostream>  // std::ostream (화면 출력이나 파일 출력 모두 처리 가능)
+#include <ostream>
 
 namespace forensics {
 
@@ -43,6 +45,12 @@ struct TimelineEvent {
     std::string eventType;         // 이벤트 종류 (예: "Created", "Modified", "Prefetch")
     std::string path;              // 관련 파일 경로
     std::string description;       // 이벤트 설명
+};
+
+// ── LnkAnalysis : LNK 파일 1개의 파싱 결과 + MFT 매칭 레코드 ──
+struct LnkAnalysis {
+    LnkInfo               lnk;
+    std::vector<MftRecord> mftRecords;
 };
 
 // ── Report 클래스 : 보고서 출력을 담당하는 기능 ────────────────
@@ -73,6 +81,11 @@ public:
     static std::vector<TimelineEvent> buildTimeline(
         const std::vector<FileInfo>&    files,
         const std::vector<Artifact>&    artifacts);
+
+    // writeLnkAnalysis : LNK 파싱 결과 + $MFT $SI/$FN 타임스탬프 보고서
+    static void writeLnkAnalysis(std::ostream& out,
+                                  const std::vector<LnkAnalysis>& results,
+                                  ReportFormat fmt);
 
     // parseFormat : "text" / "csv" / "json" 문자열을 ReportFormat 열거값으로 변환
     static ReportFormat parseFormat(const std::string& str);

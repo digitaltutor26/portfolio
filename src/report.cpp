@@ -381,4 +381,134 @@ void Report::writeTimeline(std::ostream& out,
     out << "]\n";
 }
 
+// ============================================================
+// writeLnkAnalysis : LNK 파싱 결과 + $MFT $SI/$FN 타임스탬프 보고서
+// ============================================================
+void Report::writeLnkAnalysis(std::ostream& out,
+                               const std::vector<LnkAnalysis>& results,
+                               ReportFormat fmt) {
+    if (results.empty()) {
+        if (fmt == ReportFormat::Text)  out << "분석할 LNK 파일이 없습니다.\n";
+        else if (fmt == ReportFormat::JSON) out << "[]\n";
+        return;
+    }
+
+    if (fmt == ReportFormat::Text) {
+        out << "=== LNK File Analysis ===\nTotal: " << results.size() << " file(s)\n";
+        for (auto& r : results) {
+            const LnkInfo& lnk = r.lnk;
+            out << "\n" << std::string(70,'=') << "\n";
+            out << "LNK  : " << lnk.lnkPath << "\n";
+            if (!lnk.success) { out << "ERROR: " << lnk.errorMsg << "\n"; continue; }
+            out << "대상  : " << (lnk.targetPath.empty() ? "(경로 없음)" : lnk.targetPath) << "\n";
+            if (lnk.targetSize > 0) out << "크기  : " << lnk.targetSize << " bytes\n";
+            out << "\n[볼륨]\n"
+                << "  종류   : " << lnk.volume.driveTypeStr << "\n"
+                << "  시리얼 : " << lnk.volume.serialStr << "\n";
+            if (!lnk.volume.label.empty())  out << "  레이블 : " << lnk.volume.label << "\n";
+            if (!lnk.machineName.empty()) {
+                out << "\n[머신]\n"
+                    << "  이름   : " << lnk.machineName << "\n";
+                if (!lnk.machineGuid.empty()) out << "  GUID   : " << lnk.machineGuid << "\n";
+            }
+            out << "\n[타임스탬프 - LNK 헤더]\n"
+                << "  Created  : " << lnk.targetTimes.createdStr  << "\n"
+                << "  Modified : " << lnk.targetTimes.modifiedStr << "\n"
+                << "  Accessed : " << lnk.targetTimes.accessedStr << "\n";
+            if (!r.mftRecords.empty()) {
+                out << "\n[$MFT 타임스탬프 분석 ($SI vs $FN)]\n";
+                for (auto& rec : r.mftRecords) {
+                    out << "  #" << rec.recordNumber << "  " << rec.fileName
+                        << (rec.isDeleted ? " [삭제]" : " [활성]") << "\n";
+                    out << "  " << std::setw(14) << std::left << "항목"
+                        << std::setw(22) << "$SI" << "$FN\n";
+                    out << "  " << std::string(58,'-') << "\n";
+                    auto row = [&](const char* label, const std::string& si, const std::string& fn) {
+                        out << "  " << std::setw(14) << std::left << label
+                            << std::setw(22) << si << fn << "\n";
+                    };
+                    row("Created",     rec.siTimes.createdStr,     rec.fnTimes.createdStr);
+                    row("Modified",    rec.siTimes.modifiedStr,    rec.fnTimes.modifiedStr);
+                    row("MFT-Mod",     rec.siTimes.mftModifiedStr, rec.fnTimes.mftModifiedStr);
+                    row("Accessed",    rec.siTimes.accessedStr,    rec.fnTimes.accessedStr);
+                    if (rec.timestampAnomaly)
+                        out << "\n  [경고] 타임스탬프 조작 의심: " << rec.anomalyDetail << "\n";
+                }
+            }
+        }
+        out << "\n";
+        return;
+    }
+
+    if (fmt == ReportFormat::CSV) {
+        out << "lnk_path,target_path,drive_type,serial,label,machine,"
+               "lnk_created,lnk_modified,lnk_accessed,"
+               "mft_record,file_name,is_deleted,"
+               "si_created,si_modified,si_mft_mod,si_accessed,"
+               "fn_created,fn_modified,fn_mft_mod,fn_accessed,anomaly\n";
+        for (auto& r : results) {
+            const LnkInfo& lnk = r.lnk;
+            auto base = csvEscape(lnk.lnkPath) + "," + csvEscape(lnk.targetPath) + ","
+                      + csvEscape(lnk.volume.driveTypeStr) + "," + csvEscape(lnk.volume.serialStr) + ","
+                      + csvEscape(lnk.volume.label) + "," + csvEscape(lnk.machineName) + ","
+                      + csvEscape(lnk.targetTimes.createdStr) + "," + csvEscape(lnk.targetTimes.modifiedStr) + ","
+                      + csvEscape(lnk.targetTimes.accessedStr);
+            if (r.mftRecords.empty()) { out << base << ",,,,,,,,,\n"; continue; }
+            for (auto& rec : r.mftRecords) {
+                out << base << "," << rec.recordNumber << "," << csvEscape(rec.fileName) << ","
+                    << (rec.isDeleted?"1":"0") << ","
+                    << csvEscape(rec.siTimes.createdStr) << "," << csvEscape(rec.siTimes.modifiedStr) << ","
+                    << csvEscape(rec.siTimes.mftModifiedStr) << "," << csvEscape(rec.siTimes.accessedStr) << ","
+                    << csvEscape(rec.fnTimes.createdStr) << "," << csvEscape(rec.fnTimes.modifiedStr) << ","
+                    << csvEscape(rec.fnTimes.mftModifiedStr) << "," << csvEscape(rec.fnTimes.accessedStr) << ","
+                    << (rec.timestampAnomaly?"1":"0") << "\n";
+            }
+        }
+        return;
+    }
+
+    // JSON
+    out << "[\n";
+    for (size_t i = 0; i < results.size(); ++i) {
+        const LnkInfo& lnk = results[i].lnk;
+        auto timesJson = [&](const MftMacTimes& t) {
+            return std::string("{") +
+                "\"created\":"      + jsonString(t.createdStr)     + "," +
+                "\"modified\":"     + jsonString(t.modifiedStr)    + "," +
+                "\"mft_modified\":" + jsonString(t.mftModifiedStr) + "," +
+                "\"accessed\":"     + jsonString(t.accessedStr)    + "}";
+        };
+        out << "  {\"lnk_path\":" << jsonString(lnk.lnkPath)
+            << ",\"success\":"  << (lnk.success?"true":"false")
+            << ",\"target_path\":" << jsonString(lnk.targetPath)
+            << ",\"target_size\":" << lnk.targetSize
+            << ",\"volume\":{\"type\":" << jsonString(lnk.volume.driveTypeStr)
+            << ",\"serial\":" << jsonString(lnk.volume.serialStr)
+            << ",\"label\":"  << jsonString(lnk.volume.label) << "}"
+            << ",\"machine_name\":" << jsonString(lnk.machineName)
+            << ",\"machine_guid\":" << jsonString(lnk.machineGuid)
+            << ",\"target_times\":{\"created\":" << jsonString(lnk.targetTimes.createdStr)
+            << ",\"modified\":" << jsonString(lnk.targetTimes.modifiedStr)
+            << ",\"accessed\":" << jsonString(lnk.targetTimes.accessedStr) << "}"
+            << ",\"mft_records\":[\n";
+        const auto& recs = results[i].mftRecords;
+        for (size_t j = 0; j < recs.size(); ++j) {
+            const MftRecord& rec = recs[j];
+            out << "    {\"record_number\":" << rec.recordNumber
+                << ",\"file_name\":" << jsonString(rec.fileName)
+                << ",\"is_deleted\":" << (rec.isDeleted?"true":"false")
+                << ",\"si_timestamps\":" << timesJson(rec.siTimes)
+                << ",\"fn_timestamps\":" << timesJson(rec.fnTimes)
+                << ",\"anomaly\":" << (rec.timestampAnomaly?"true":"false")
+                << ",\"anomaly_detail\":" << jsonString(rec.anomalyDetail) << "}";
+            if (j + 1 < recs.size()) out << ",";
+            out << "\n";
+        }
+        out << "  ]}";
+        if (i + 1 < results.size()) out << ",";
+        out << "\n";
+    }
+    out << "]\n";
+}
+
 } // namespace forensics
