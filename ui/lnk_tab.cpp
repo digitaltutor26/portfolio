@@ -81,7 +81,8 @@ void LnkTab::setupUi() {
     connect(m_analyzeBtn,  &QPushButton::clicked, this,&LnkTab::onAnalyze);
     connect(m_exportCsvBtn,&QPushButton::clicked, this,&LnkTab::onExportCsv);
     connect(m_exportJsonBtn,&QPushButton::clicked,this,&LnkTab::onExportJson);
-    connect(m_lnkTable,&QTableWidget::currentRowChanged,this,[this](int row){
+    connect(m_lnkTable,&QTableWidget::currentItemChanged,this,[this](QTableWidgetItem* item, QTableWidgetItem*){
+        int row = item ? item->row() : -1;
         if (row>=0 && row<static_cast<int>(m_results.size())) populateMftTable(m_results[row]);
         else m_mftTable->setRowCount(0);
     });
