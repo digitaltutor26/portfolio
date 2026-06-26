@@ -9,6 +9,9 @@ Windows 디지털 포렌식 도구 — **C++17 + Qt6 GUI** 구현
 
 파일 메타데이터 분석, MD5/SHA-256 해시 계산, Windows 활동 흔적(Artifact) 수집, LNK 파일 파싱, $MFT $SI/$FN 타임스탬프 비교, 통합 타임라인 생성을 지원하며 Text / CSV / JSON 세 가지 형식으로 보고서를 출력합니다. GUI 모드와 CLI 모드를 모두 제공합니다.
 
+> [!IMPORTANT]
+> **새 Windows PC에 처음 설치하는 경우** → 아래 [Windows 설치 가이드](#windows-설치-가이드) 섹션을 먼저 확인하세요.
+
 ---
 
 ## 기능
@@ -36,6 +39,67 @@ Windows 디지털 포렌식 도구 — **C++17 + Qt6 GUI** 구현
 | CMake | 3.16 이상 |
 | 컴파일러 | MSVC (Visual Studio 2019+) 또는 MinGW-w64 (GCC 10+) |
 | Qt (GUI 선택) | Qt 6.x (Core · Widgets · Concurrent) |
+
+---
+
+## Windows 설치 가이드
+
+> [!IMPORTANT]
+> **처음 설치하거나 새 PC에서 시작하는 경우 이 섹션을 따라주세요.**
+
+---
+
+### 1단계 — 사전 소프트웨어 설치 (최초 1회)
+
+| 소프트웨어 | 설명 | 설치 옵션 |
+|-----------|------|----------|
+| **Git for Windows** | 소스 코드 다운로드 및 업데이트 | 설치 시 기본 옵션 유지 |
+| **Qt 6.11.1** | GUI 빌드에 필요 | Qt Installer → `Qt 6.11.1` → `MinGW 64-bit` 체크 |
+
+> Qt Installer 실행 시 **MinGW 64-bit** 컴포넌트와 함께 **Qt 6.11.1** 을 선택해야 합니다.  
+> 기본 설치 경로: `C:\Qt\6.11.1\mingw_64`
+
+---
+
+### 2단계 — 소스 클론 (최초 1회)
+
+cmd(명령 프롬프트)를 열고 아래 명령 실행:
+
+```cmd
+git clone https://github.com/digitaltutor26/portfolio.git D:\portfolio
+cd D:\portfolio
+```
+
+---
+
+### 3단계 — 최초 빌드 (최초 1회)
+
+```cmd
+build.bat
+```
+
+빌드 완료 후 `D:\portfolio`에 아래 파일이 생성됩니다:
+
+| 파일 | 설명 |
+|------|------|
+| `winforensics_gui.exe` | GUI 버전 — 더블클릭으로 실행 |
+| `winforensics.exe` | CLI 버전 — cmd에서 실행 |
+
+---
+
+### 4단계 — 업데이트 (소스 변경 시)
+
+GitHub에 새 수정사항이 반영된 경우:
+
+```cmd
+cd D:\portfolio
+update.bat
+```
+
+`update.bat` 는 최신 소스를 자동으로 받아 재빌드합니다.
+
+> [!NOTE]
+> `CMakeLists.txt` 가 변경된 경우 `update.bat` 대신 `build.bat` 를 실행하세요.
 
 ---
 
